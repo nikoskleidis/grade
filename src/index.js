@@ -1,7 +1,7 @@
 const prefixes = ['webkit'];
 
 class Grade {
-    constructor(container, img_selector, callback) {
+    constructor(container, img_selector, callback, options) {
         this.callback = callback || null
         this.container = container;
         this.image = this.container.querySelector(img_selector) || this.container.querySelector('img')
@@ -16,13 +16,13 @@ class Grade {
             height: 0
         };
         this.imageData = [];
-        this.readImage()
+        this.readImage(options)
     }
 
-    readImage() {
+    readImage(options) {
         this.imageDimensions.width = this.image.width * 0.1;
         this.imageDimensions.height = this.image.height * 0.1;
-        this.render()
+        this.render(options)
     }
 
     getImageData() {
@@ -80,15 +80,15 @@ class Grade {
 
     getSortedValues(uniq) {
         const occurs = Object.keys(uniq).map(key => {
-                const rgbaKey = key;
-                let components = key.split('|'),
-                    brightness = ((components[0] * 299) + (components[1] * 587) + (components[2] * 114)) / 1000
-                return {
-                    rgba: rgbaKey.split('|'),
-                    occurs: uniq[key],
-                    brightness
-                }
-            }).sort((a, b) => a.occurs - b.occurs).reverse().slice(0, 10);
+            const rgbaKey = key;
+            let components = key.split('|'),
+                brightness = ((components[0] * 299) + (components[1] * 587) + (components[2] * 114)) / 1000
+            return {
+                rgba: rgbaKey.split('|'),
+                occurs: uniq[key],
+                brightness
+            }
+        }).sort((a, b) => a.occurs - b.occurs).reverse().slice(0, 10);
         return occurs.sort((a, b) => a.brightness - b.brightness).reverse()
     }
 
@@ -97,7 +97,7 @@ class Grade {
         let o = Math.round(((parseInt(rgb[0]) * 299) + (parseInt(rgb[1]) * 587) + (parseInt(rgb[2]) * 114)) /1000);
         if (o > 125) {
             return 'color: #000';
-        } else { 
+        } else {
             return 'color: #fff';
         }
     }
@@ -119,8 +119,8 @@ class Grade {
         }, {})
     }
 
-    renderGradient() {
-        const ls = window.localStorage;
+    renderGradient({ saveToStorage = true }) {
+        const ls = saveToStorage ? window.localStorage : undefined;
         const item_name = `grade-${this.image.getAttribute('src')}`;
         let top = null;
 
@@ -148,18 +148,18 @@ class Grade {
         this.container.setAttribute('style', style)
     }
 
-    render() {
+    render(options) {
         this.canvas.width = this.imageDimensions.width;
         this.canvas.height = this.imageDimensions.height;
         this.ctx.drawImage(this.image, 0, 0, this.imageDimensions.width, this.imageDimensions.height);
         this.getImageData();
-        this.renderGradient();
+        this.renderGradient(options);
     }
 }
 
-module.exports = (containers, img_selector, callback) => {
-    const init = (container, img_selector, callback) => {
-        let grade = new Grade(container, img_selector, callback),
+module.exports = (containers, img_selector, callback, options) => {
+    const init = (container, img_selector, callback, options) => {
+        let grade = new Grade(container, img_selector, callback, options),
             gradientData = grade.gradientData
         if(!gradientData.length){
             return null
@@ -170,8 +170,8 @@ module.exports = (containers, img_selector, callback) => {
         }
     }
     let results = (NodeList.prototype.isPrototypeOf(containers)
-    ? Array.from(containers).map(container => init(container, img_selector, callback))
-    : [init(containers, img_selector, callback)]).filter(Boolean)
+        ? Array.from(containers).map(container => init(container, img_selector, callback))
+        : [init(containers, img_selector, callback, options)]).filter(Boolean)
 
     if(results.length){
         return callback(results)
