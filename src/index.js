@@ -57,15 +57,16 @@ class Grade {
         }).join(',')
     }
 
-    getCSSGradientProperty(top) {
+    getCSSGradientProperty(top, vertical) {
         const val = this.getRGBAGradientValues(top);
+        const degrees = vertical ? '180deg' : '135deg'
         return prefixes.map(prefix => {
             return `background-image: -${prefix}-linear-gradient(
-                        135deg,
+                        ${degrees},
                         ${val}
                     )`
         }).concat([`background-image: linear-gradient(
-                    135deg,
+                    ${degrees},
                     ${val}
                 )`]).join(';')
     }
@@ -119,7 +120,7 @@ class Grade {
         }, {})
     }
 
-    renderGradient({ saveToStorage = true }) {
+    renderGradient({ saveToStorage = true, vertical = false }) {
         const ls = saveToStorage ? window.localStorage : undefined;
         const item_name = `grade-${this.image.getAttribute('src')}`;
         let top = null;
@@ -140,7 +141,7 @@ class Grade {
             return
         }
 
-        let gradientProperty = this.getCSSGradientProperty(top);
+        let gradientProperty = this.getCSSGradientProperty(top, vertical);
 
         let textProperty = this.getTextProperty(top);
 
