@@ -8,7 +8,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var prefixes = ['webkit'];
 
 var Grade = function () {
-    function Grade(container, img_selector, callback) {
+    function Grade(container, img_selector, callback, options) {
         _classCallCheck(this, Grade);
 
         this.callback = callback || null;
@@ -25,15 +25,15 @@ var Grade = function () {
             height: 0
         };
         this.imageData = [];
-        this.readImage();
+        this.readImage(options);
     }
 
     _createClass(Grade, [{
         key: 'readImage',
-        value: function readImage() {
+        value: function readImage(options) {
             this.imageDimensions.width = this.image.width * 0.1;
             this.imageDimensions.height = this.image.height * 0.1;
-            this.render();
+            this.render(options);
         }
     }, {
         key: 'getImageData',
@@ -74,11 +74,12 @@ var Grade = function () {
         }
     }, {
         key: 'getCSSGradientProperty',
-        value: function getCSSGradientProperty(top) {
+        value: function getCSSGradientProperty(top, vertical) {
             var val = this.getRGBAGradientValues(top);
+            var degrees = vertical ? '180deg' : '135deg';
             return prefixes.map(function (prefix) {
-                return 'background-image: -' + prefix + '-linear-gradient(\n                        135deg,\n                        ' + val + '\n                    )';
-            }).concat(['background-image: linear-gradient(\n                    135deg,\n                    ' + val + '\n                )']).join(';');
+                return 'background-image: -' + prefix + '-linear-gradient(\n                        ' + degrees + ',\n                        ' + val + '\n                    )';
+            }).concat(['background-image: linear-gradient(\n                    ' + degrees + ',\n                    ' + val + '\n                )']).join(';');
         }
     }, {
         key: 'getMiddleRGB',
@@ -140,8 +141,13 @@ var Grade = function () {
         }
     }, {
         key: 'renderGradient',
-        value: function renderGradient() {
-            var ls = window.localStorage;
+        value: function renderGradient(_ref) {
+            var _ref$saveToStorage = _ref.saveToStorage,
+                saveToStorage = _ref$saveToStorage === undefined ? true : _ref$saveToStorage,
+                _ref$vertical = _ref.vertical,
+                vertical = _ref$vertical === undefined ? false : _ref$vertical;
+
+            var ls = saveToStorage ? window.localStorage : undefined;
             var item_name = 'grade-' + this.image.getAttribute('src');
             var top = null;
 
@@ -161,7 +167,7 @@ var Grade = function () {
                 return;
             }
 
-            var gradientProperty = this.getCSSGradientProperty(top);
+            var gradientProperty = this.getCSSGradientProperty(top, vertical);
 
             var textProperty = this.getTextProperty(top);
 
@@ -170,21 +176,21 @@ var Grade = function () {
         }
     }, {
         key: 'render',
-        value: function render() {
+        value: function render(options) {
             this.canvas.width = this.imageDimensions.width;
             this.canvas.height = this.imageDimensions.height;
             this.ctx.drawImage(this.image, 0, 0, this.imageDimensions.width, this.imageDimensions.height);
             this.getImageData();
-            this.renderGradient();
+            this.renderGradient(options);
         }
     }]);
 
     return Grade;
 }();
 
-module.exports = function (containers, img_selector, callback) {
-    var init = function init(container, img_selector, callback) {
-        var grade = new Grade(container, img_selector, callback),
+module.exports = function (containers, img_selector, callback, options) {
+    var init = function init(container, img_selector, callback, options) {
+        var grade = new Grade(container, img_selector, callback, options),
             gradientData = grade.gradientData;
         if (!gradientData.length) {
             return null;
@@ -196,7 +202,7 @@ module.exports = function (containers, img_selector, callback) {
     };
     var results = (NodeList.prototype.isPrototypeOf(containers) ? Array.from(containers).map(function (container) {
         return init(container, img_selector, callback);
-    }) : [init(containers, img_selector, callback)]).filter(Boolean);
+    }) : [init(containers, img_selector, callback, options)]).filter(Boolean);
 
     if (results.length) {
         return callback(results);
